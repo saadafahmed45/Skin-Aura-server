@@ -69,7 +69,38 @@ if (process.env.NODE_ENV !== "test") {
   app.use(morgan("dev"));
 }
 
-// Health Check Endpoint (Required by Section 31)
+const connectDB = require("./config/db");
+
+// Auto-connect to DB in serverless environments (Vercel)
+app.use(async (req, res, next) => {
+  if (process.env.MONGODB_URI) {
+    try {
+      await connectDB();
+    } catch (e) {
+      console.error("[DB Middleware Error]", e.message);
+    }
+  }
+  next();
+});
+
+// Root & Welcome Endpoints
+app.get(["/", "/api"], (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "✨ SkinAura API Server is running successfully!",
+    status: "healthy",
+    endpoints: {
+      health: "/api/health",
+      products: "/api/products",
+      categories: "/api/categories",
+      orders: "/api/orders",
+      auth: "/api/auth",
+      admin: "/api/admin",
+    },
+  });
+});
+
+// Health Check Endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
