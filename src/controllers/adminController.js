@@ -250,10 +250,56 @@ const toggleCustomerStatus = async (req, res, next) => {
   }
 };
 
+// @desc    Update user role (customer <-> admin)
+// @route   PATCH /api/admin/customers/:id/role
+// @access  Private/Admin
+const updateUserRole = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!["customer", "admin"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role specified. Must be 'customer' or 'admin'.",
+      });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // Prevent demoting oneself
+    if (user._id.toString() === req.user._id.toString() && role !== "admin") {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot revoke your own administrator privileges.",
+      });
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `User role successfully updated to ${role}.`,
+      user,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getAdminOrders,
   updateOrderStatus,
   getAdminCustomers,
   toggleCustomerStatus,
+  updateUserRole,
 };

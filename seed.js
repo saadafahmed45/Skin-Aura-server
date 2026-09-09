@@ -109,6 +109,7 @@ const seedDatabase = async () => {
       rating: p.rating || 5.0,
       reviewCount: p.reviewCount || 0,
       isFeatured: Boolean(p.isFeatured),
+      isTopSelling: Boolean(p.isTopSelling),
       tags: Array.isArray(p.tags) ? p.tags : [],
       slug:
         p.slug ||

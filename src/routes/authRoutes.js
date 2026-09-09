@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   register,
   login,
+  googleAuth,
   logout,
   getMe,
   updateProfile,
@@ -13,6 +14,7 @@ const { uploadUserAvatar } = require("../middleware/upload");
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/google", googleAuth);
 router.post("/logout", logout);
 router.get("/me", authenticateUser, getMe);
 router.patch(

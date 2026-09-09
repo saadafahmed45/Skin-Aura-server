@@ -15,6 +15,7 @@ const getProducts = async (req, res, next) => {
       maxPrice,
       rating,
       isFeatured,
+      isTopSelling,
       search,
       sort,
       page = 1,
@@ -52,6 +53,10 @@ const getProducts = async (req, res, next) => {
         const feat = isFeatured === "true" || isFeatured === true;
         list = list.filter((p) => Boolean(p.isFeatured) === feat);
       }
+      if (isTopSelling !== undefined) {
+        const top = isTopSelling === "true" || isTopSelling === true;
+        list = list.filter((p) => Boolean(p.isTopSelling) === top);
+      }
       if (search && search.trim()) {
         const term = search.toLowerCase().trim();
         list = list.filter(
@@ -69,6 +74,13 @@ const getProducts = async (req, res, next) => {
         list.sort((a, b) => (b.price || 0) - (a.price || 0));
       } else if (sort === "rating") {
         list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else if (sort === "top-selling" || sort === "sold") {
+        list.sort((a, b) => {
+          if (Boolean(b.isTopSelling) !== Boolean(a.isTopSelling)) {
+            return b.isTopSelling ? 1 : -1;
+          }
+          return (b.sold || 0) - (a.sold || 0) || (b.rating || 0) - (a.rating || 0);
+        });
       } else if (sort === "name-asc") {
         list.sort((a, b) => a.name.localeCompare(b.name));
       }
@@ -127,6 +139,11 @@ const getProducts = async (req, res, next) => {
       query.isFeatured = isFeatured === "true" || isFeatured === true;
     }
 
+    // Top Selling filter
+    if (isTopSelling !== undefined) {
+      query.isTopSelling = isTopSelling === "true" || isTopSelling === true;
+    }
+
     // Search query across name, brand, description, tags
     if (search && search.trim() !== "") {
       const searchRegex = new RegExp(search.trim(), "i");
@@ -147,6 +164,8 @@ const getProducts = async (req, res, next) => {
       sortCriteria = { price: -1 };
     } else if (sort === "rating") {
       sortCriteria = { rating: -1 };
+    } else if (sort === "top-selling" || sort === "sold") {
+      sortCriteria = { isTopSelling: -1, isFeatured: -1, sold: -1, rating: -1 };
     } else if (sort === "name-asc") {
       sortCriteria = { name: 1 };
     }

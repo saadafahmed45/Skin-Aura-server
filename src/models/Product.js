@@ -97,6 +97,11 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isTopSelling: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     tags: {
       type: [String],
       default: [],

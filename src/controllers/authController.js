@@ -6,7 +6,7 @@ const { sendTokenResponse } = require("../utils/token");
 // @access  Public
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, phone, address } = req.body;
+    const { name, email, password, phone, address, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -29,7 +29,7 @@ const register = async (req, res, next) => {
       password,
       phone: phone || "",
       address: address || "",
-      role: "customer",
+      role: role === "admin" ? "admin" : "customer",
     });
 
     sendTokenResponse(user, 201, res, "Account registered successfully.");
@@ -176,9 +176,68 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+// @desc    Google OAuth Login / Register
+// @route   POST /api/auth/google
+// @access  Public
+const googleAuth = async (req, res, next) => {
+  try {
+    const { name, email, avatar, googleId, role } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Google email address is required.",
+      });
+    }
+
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      // Create new user with chosen role
+      user = await User.create({
+        name: name || email.split("@")[0],
+        email: email.toLowerCase(),
+        authProvider: "google",
+        googleId: googleId || "",
+        avatar: {
+          url:
+            avatar ||
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+          public_id: "",
+        },
+        role: role === "admin" ? "admin" : "customer",
+      });
+    } else {
+      // Existing user
+      if (googleId && !user.googleId) {
+        user.googleId = googleId;
+      }
+      if (role === "admin" && user.role !== "admin") {
+        user.role = "admin";
+      }
+      if (avatar && (!user.avatar || !user.avatar.url)) {
+        user.avatar = { url: avatar, public_id: "" };
+      }
+      await user.save();
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been disabled. Please contact support.",
+      });
+    }
+
+    sendTokenResponse(user, 200, res, "Authenticated with Google successfully.");
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
+  googleAuth,
   logout,
   getMe,
   updateProfile,
