@@ -144,15 +144,14 @@ const getProducts = async (req, res, next) => {
       query.isTopSelling = isTopSelling === "true" || isTopSelling === true;
     }
 
-    // Search query across name, brand, description, tags
+    // Search query across name, brand, category, tags
     if (search && search.trim() !== "") {
       const searchRegex = new RegExp(search.trim(), "i");
       query.$or = [
         { name: searchRegex },
         { brand: searchRegex },
-        { description: searchRegex },
-        { tags: searchRegex },
         { category: searchRegex },
+        { tags: searchRegex },
       ];
     }
 
@@ -174,11 +173,31 @@ const getProducts = async (req, res, next) => {
     const limitNum = parseInt(limit, 10) || 20;
     const skip = (pageNum - 1) * limitNum;
 
-    const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
-      .sort(sortCriteria)
-      .skip(skip)
-      .limit(limitNum);
+    const [total, rawProducts] = await Promise.all([
+      Product.countDocuments(query),
+      Product.find(query)
+        .select("-imageDetails -__v")
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+    ]);
+
+    const fallbackImageUrl =
+      "https://images.pexels.com/photos/3762756/pexels-photo-3762756.jpeg";
+
+    const products = rawProducts.map((p) => {
+      const sanitizedImages = (p.images || []).map((img) =>
+        typeof img === "string" && img.startsWith("data:") && img.length > 50000
+          ? fallbackImageUrl
+          : img
+      );
+      return {
+        ...p,
+        id: p.legacyId || p._id,
+        images: sanitizedImages,
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -187,7 +206,7 @@ const getProducts = async (req, res, next) => {
       totalPages: Math.ceil(total / limitNum) || 1,
       currentPage: pageNum,
       products,
-      data: products, // compatible with both `data` and `products`
+      data: products,
     });
   } catch (error) {
     next(error);
@@ -228,17 +247,21 @@ const getProductByIdOrSlug = async (req, res, next) => {
 
     // 1. Try finding by MongoDB ObjectId if valid
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
-      product = await Product.findById(idOrSlug);
+      product = await Product.findById(idOrSlug).lean();
     }
 
     // 2. Try finding by numeric legacyId (e.g. id: 1)
     if (!product && !isNaN(Number(idOrSlug))) {
-      product = await Product.findOne({ legacyId: Number(idOrSlug) });
+      product = await Product.findOne({ legacyId: Number(idOrSlug) }).lean();
     }
 
     // 3. Try finding by slug
     if (!product) {
-      product = await Product.findOne({ slug: idOrSlug.toLowerCase() });
+      product = await Product.findOne({ slug: idOrSlug.toLowerCase() }).lean();
+    }
+
+    if (product) {
+      product.id = product.legacyId || product._id;
     }
 
     if (!product) {

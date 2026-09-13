@@ -149,4 +149,11 @@ productSchema.pre("validate", function () {
   }
 });
 
+// Compound indexes for high-frequency e-commerce queries
+productSchema.index({ isActive: 1, isTopSelling: -1, isFeatured: -1, sold: -1, rating: -1 });
+productSchema.index({ isActive: 1, category: 1, createdAt: -1 });
+productSchema.index({ isActive: 1, price: 1 });
+productSchema.index({ isActive: 1, rating: -1 });
+productSchema.index({ name: "text", brand: "text", category: "text", tags: "text" });
+
 module.exports = mongoose.model("Product", productSchema);

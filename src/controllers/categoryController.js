@@ -17,9 +17,10 @@ const getCategories = async (req, res, next) => {
       });
     }
 
-    const categories = await Category.find({ isActive: true }).sort({
-      createdAt: 1,
-    });
+    const categories = await Category.find({ isActive: true })
+      .select("-__v")
+      .sort({ createdAt: 1 })
+      .lean();
     res.status(200).json({
       success: true,
       count: categories.length,
