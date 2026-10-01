@@ -16,7 +16,12 @@ const sendTokenResponse = (user, statusCode, res, message = "Success") => {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "lax",
-    domain: process.env.COOKIE_DOMAIN || undefined,
+    domain:
+      isProduction &&
+      process.env.COOKIE_DOMAIN &&
+      process.env.COOKIE_DOMAIN !== "localhost"
+        ? process.env.COOKIE_DOMAIN
+        : undefined,
   };
 
   res

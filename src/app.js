@@ -22,14 +22,29 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const app = express();
 
 // Security Headers
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
 
 // CORS Configuration
-const allowedOrigins = [
-  process.env.CLIENT_URL || "http://localhost:3000",
+const rawOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(",")
+  : [];
+const defaultOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  "https://skin-aura-shop.vercel.app",
 ];
+
+const allowedOrigins = Array.from(
+  new Set([
+    ...rawOrigins.map((o) => o.trim().replace(/\/+$/, "")),
+    ...defaultOrigins,
+  ])
+).filter(Boolean);
 
 app.use(
   cors({
