@@ -187,11 +187,13 @@ const getProducts = async (req, res, next) => {
       "https://images.pexels.com/photos/3762756/pexels-photo-3762756.jpeg";
 
     const products = rawProducts.map((p) => {
-      const sanitizedImages = (p.images || []).map((img) =>
-        typeof img === "string" && img.startsWith("data:") && img.length > 50000
-          ? fallbackImageUrl
-          : img
-      );
+      const sanitizedImages = (p.images || []).map((img) => {
+        if (typeof img !== "string") return fallbackImageUrl;
+        if (img.startsWith("data:") && img.length > 50000) return fallbackImageUrl;
+        if (img.includes("laroche-posay.us")) return fallbackImageUrl;
+        if (img.includes("bioderma.co.uk")) return "https://images.pexels.com/photos/3736398/pexels-photo-3736398.jpeg";
+        return img;
+      });
       return {
         ...p,
         id: p.legacyId || p._id,
@@ -262,6 +264,15 @@ const getProductByIdOrSlug = async (req, res, next) => {
 
     if (product) {
       product.id = product.legacyId || product._id;
+      const fallbackImageUrl =
+        "https://images.pexels.com/photos/3762756/pexels-photo-3762756.jpeg";
+      product.images = (product.images || []).map((img) => {
+        if (typeof img !== "string") return fallbackImageUrl;
+        if (img.startsWith("data:") && img.length > 50000) return fallbackImageUrl;
+        if (img.includes("laroche-posay.us")) return fallbackImageUrl;
+        if (img.includes("bioderma.co.uk")) return "https://images.pexels.com/photos/3736398/pexels-photo-3736398.jpeg";
+        return img;
+      });
     }
 
     if (!product) {
