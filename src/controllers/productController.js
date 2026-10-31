@@ -11,6 +11,7 @@ const getProducts = async (req, res, next) => {
       category,
       brand,
       skinType,
+      tag,
       minPrice,
       maxPrice,
       rating,
@@ -37,6 +38,13 @@ const getProducts = async (req, res, next) => {
         list = list.filter((p) =>
           Array.isArray(p.skinType)
             ? p.skinType.some((st) => st.toLowerCase().includes(skinType.toLowerCase()))
+            : false
+        );
+      }
+      if (tag) {
+        list = list.filter((p) =>
+          Array.isArray(p.tags)
+            ? p.tags.some((t) => t.toLowerCase() === tag.toLowerCase())
             : false
         );
       }
@@ -116,6 +124,11 @@ const getProducts = async (req, res, next) => {
     // Skin type filter (element in skinType array)
     if (skinType) {
       query.skinType = { $regex: new RegExp(skinType, "i") };
+    }
+
+    // Tag filter
+    if (tag) {
+      query.tags = { $regex: new RegExp(tag, "i") };
     }
 
     // Price range filter
