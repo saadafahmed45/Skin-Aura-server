@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Review = require("../models/Review");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
@@ -9,9 +10,15 @@ const getProductReviews = async (req, res, next) => {
   try {
     const { productId } = req.params;
 
-    let product = await Product.findById(productId);
+    let product = null;
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId);
+    }
     if (!product && !isNaN(Number(productId))) {
       product = await Product.findOne({ legacyId: Number(productId) });
+    }
+    if (!product) {
+      product = await Product.findOne({ slug: String(productId).toLowerCase() });
     }
 
     if (!product) {
@@ -51,9 +58,15 @@ const createReview = async (req, res, next) => {
       });
     }
 
-    let product = await Product.findById(productId);
+    let product = null;
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId);
+    }
     if (!product && !isNaN(Number(productId))) {
       product = await Product.findOne({ legacyId: Number(productId) });
+    }
+    if (!product) {
+      product = await Product.findOne({ slug: String(productId).toLowerCase() });
     }
 
     if (!product) {

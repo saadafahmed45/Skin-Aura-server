@@ -207,9 +207,18 @@ const getProducts = async (req, res, next) => {
         if (img.includes("bioderma.co.uk")) return "https://images.pexels.com/photos/3736398/pexels-photo-3736398.jpeg";
         return img;
       });
+      const slug =
+        p.slug ||
+        (p.name
+          ? p.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, "")
+          : String(p.legacyId || p._id));
       return {
         ...p,
         id: p.legacyId || p._id,
+        slug,
         images: sanitizedImages,
       };
     });
@@ -253,6 +262,14 @@ const getProductByIdOrSlug = async (req, res, next) => {
         });
       }
 
+      if (!product.slug && product.name) {
+        product.slug =
+          product.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "") || String(product.id || product._id);
+      }
+
       return res.status(200).json({
         success: true,
         product,
@@ -277,6 +294,13 @@ const getProductByIdOrSlug = async (req, res, next) => {
 
     if (product) {
       product.id = product.legacyId || product._id;
+      if (!product.slug && product.name) {
+        product.slug =
+          product.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "") || String(product.id);
+      }
       const fallbackImageUrl =
         "https://images.pexels.com/photos/3762756/pexels-photo-3762756.jpeg";
       product.images = (product.images || []).map((img) => {
