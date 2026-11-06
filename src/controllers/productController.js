@@ -348,7 +348,7 @@ const createProduct = async (req, res, next) => {
     }
 
     // Parse array fields if passed as JSON strings from FormData
-    ["skinType", "ingredients", "tags"].forEach((field) => {
+    ["skinType", "ingredients", "tags", "keyBenefits"].forEach((field) => {
       if (typeof productData[field] === "string") {
         try {
           productData[field] = JSON.parse(productData[field]);
@@ -432,7 +432,7 @@ const updateProduct = async (req, res, next) => {
     }
 
     // Parse array fields
-    ["skinType", "ingredients", "tags"].forEach((field) => {
+    ["skinType", "ingredients", "tags", "keyBenefits"].forEach((field) => {
       if (typeof updates[field] === "string") {
         try {
           updates[field] = JSON.parse(updates[field]);

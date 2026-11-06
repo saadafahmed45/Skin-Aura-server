@@ -106,6 +106,10 @@ const productSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    keyBenefits: {
+      type: [String],
+      default: [],
+    },
     // Array of image URLs for direct frontend compatibility
     images: {
       type: [String],
